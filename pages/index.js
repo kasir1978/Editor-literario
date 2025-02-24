@@ -5,9 +5,23 @@ export default function Home() {
   const [text, setText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmittedText(text);
+  // 🔥 NUEVA FUNCIÓN: Enviar texto a la API
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Evita recargar la página
+
+    try {
+      const response = await fetch("/api/correct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }), // Enviar el texto a la API
+      });
+
+      const data = await response.json();
+      setSubmittedText(data.correctedText || "Error en la respuesta"); // Mostrar el resultado
+    } catch (error) {
+      console.error("Error al conectar con la API:", error);
+      setSubmittedText("Error al procesar el texto.");
+    }
   };
 
   return (
@@ -38,7 +52,7 @@ export default function Home() {
         </form>
         {submittedText && (
           <div className="mt-6 p-4 bg-white shadow-lg rounded-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold">Texto Ingresado:</h2>
+            <h2 className="text-xl font-semibold">Texto Corregido:</h2>
             <p className="mt-2 text-gray-800">{submittedText}</p>
           </div>
         )}
@@ -46,3 +60,4 @@ export default function Home() {
     </>
   );
 }
+
