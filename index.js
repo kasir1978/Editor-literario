@@ -4,9 +4,29 @@ import Head from "next/head";
 export default function Home() {
   const [text, setText] = useState("");
   const [submittedText, setSubmittedText] = useState("");
+  const [responseText, setResponseText] = useState(""); // Nuevo estado para la respuesta de la API
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    try {
+      const response = await fetch("/api/correct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error del servidor: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResponseText(data.correctedText || "No se pudo procesar el texto.");
+    } catch (error) {
+      console.error("Error al enviar la solicitud:", error);
+      setResponseText("Hubo un error al analizar el texto.");
+    }
+
     setSubmittedText(text);
   };
 
@@ -14,7 +34,10 @@ export default function Home() {
     <>
       <Head>
         <title>Editor Literario</title>
-        <meta name="description" content="Asistente literario con IA para mejorar la escritura y corrección de textos." />
+        <meta
+          name="description"
+          content="Asistente literario con IA para mejorar la escritura y corrección de textos."
+        />
       </Head>
       <main className="flex flex-col items-center justify-center min-h-screen p-5 bg-gray-100">
         <h1 className="text-4xl font-bold text-gray-900">Editor Literario</h1>
@@ -40,6 +63,12 @@ export default function Home() {
           <div className="mt-6 p-4 bg-white shadow-lg rounded-lg w-full max-w-lg">
             <h2 className="text-xl font-semibold">Texto Ingresado:</h2>
             <p className="mt-2 text-gray-800">{submittedText}</p>
+          </div>
+        )}
+        {responseText && (
+          <div className="mt-6 p-4 bg-white shadow-lg rounded-lg w-full max-w-lg">
+            <h2 className="text-xl font-semibold">Texto Corregido:</h2>
+            <p className="mt-2 text-green-700">{responseText}</p>
           </div>
         )}
       </main>
