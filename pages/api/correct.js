@@ -9,6 +9,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log("Procesando texto:", text); // Para ver si el texto llega correctamente
+    console.log("Clave API utilizada:", process.env.OPENAI_API_KEY ? "Presente" : "No encontrada"); // Para ver si la clave está definida
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -17,12 +20,17 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4",
-        messages: [{ role: "system", content: "Corrige el siguiente texto manteniendo su significado y estructura:" }, { role: "user", content: text }],
+        messages: [
+          { role: "system", content: "Corrige el siguiente texto manteniendo su significado y estructura:" },
+          { role: "user", content: text }
+        ],
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Error de OpenAI: ${response.status}`);
+      const errorText = await response.text();
+      console.error("Error en la API de OpenAI:", response.status, errorText);
+      return res.status(response.status).json({ message: `Error de OpenAI: ${errorText}` });
     }
 
     const data = await response.json();
@@ -30,7 +38,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ correctedText });
   } catch (error) {
-    console.error("Error en la API de OpenAI:", error);
-    return res.status(500).json({ message: "Error al procesar el texto." });
+    console.error("Error interno:", error);
+    return res.status(500).json({ message: "Error interno del servidor.", error: error.message });
   }
 }
